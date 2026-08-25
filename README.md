@@ -13,12 +13,16 @@ Each project is a standalone Go module in its own directory.
 
 | # | Project | Description | Status |
 |---|---|---|---|
-| 01 | [Kubernetes Pod Auto-Healer](./01-pod-auto-healer) | Watches Pods, detects CrashLoopBackOff/OOMKilled/ImagePullBackOff/Failed, remediates with owner-aware retry+backoff | ✅ Complete |
-| 02 | Kubernetes Deployment Watcher | Monitor Deployment health and rollout status | 🔜 Planned |
-| 03 | Kubernetes Resource Monitor | Track CPU/memory usage against requests/limits | 🔜 Planned |
-| 04 | Kubernetes Log Analyzer | Analyze application logs and detect failures | 🔜 Planned |
-| 05 | Kubernetes Restart Controller | Detect repeated crashes across workloads | 🔜 Planned |
-| 06 | Kubernetes Cost Monitor | Identify resource over-provisioning | 🔜 Planned |
+| 01 | [Pod Auto-Healer](./01-pod-auto-healer) | Detect unhealthy Pods, remediate with owner-aware retry + exponential backoff | ✅ Complete |
+| 02 | Deployment Rollout Manager | Automated rollout monitoring and rollback | 🔜 Planned |
+| 03 | Kubernetes Resource Optimizer | Analyze CPU/memory usage, recommend request/limit changes | 🔜 Planned |
+| 04 | Auto-Scaling Controller | Custom scaling driven by application metrics | 🔜 Planned |
+| 05 | Kubernetes Cost Optimizer | Find over-provisioned workloads, reduce resource waste | 🔜 Planned |
+| 06 | Canary Deployment Controller | Gradual traffic shift with automatic rollback on errors | 🔜 Planned |
+| 07 | PostgreSQL Kubernetes Operator | Operator managing DB lifecycle, backup, failover | 🔜 Planned |
+| 08 | Self-Healing Microservice Platform | Centralized detect → diagnose → remediate | 🔜 Planned |
+| 09 | GitOps Deployment Engine | Git commit → validate → deploy → health-check → rollback | 🔜 Planned |
+| 10 | Custom Kubernetes Controller | Controller/CRD built from scratch on client-go / controller-runtime | 🔜 Planned |
 
 ## Tech stack
 
@@ -38,7 +42,15 @@ go-k8s-automation/
 │   ├── Dockerfile
 │   ├── go.mod
 │   └── README.md
-├── 02-deployment-watcher/   (planned)
+├── 02-rollout-manager/       (planned)
+├── 03-resource-optimizer/    (planned)
+├── 04-autoscaler/            (planned)
+├── 05-cost-optimizer/        (planned)
+├── 06-canary-controller/     (planned)
+├── 07-postgres-operator/     (planned)
+├── 08-self-healing-platform/ (planned)
+├── 09-gitops-engine/         (planned)
+├── 10-custom-controller/     (planned)
 └── README.md
 ```
 
