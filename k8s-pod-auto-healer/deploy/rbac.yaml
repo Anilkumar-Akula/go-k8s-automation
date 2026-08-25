@@ -1,0 +1,28 @@
+# Namespaced Role, not ClusterRole: the healer only watches/remediates
+# TARGET_NAMESPACE, so it should not be able to touch pods anywhere else.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-auto-healer
+  namespace: auto-healer-demo
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-auto-healer
+  namespace: auto-healer-demo
+subjects:
+  - kind: ServiceAccount
+    name: pod-auto-healer
+    namespace: auto-healer-demo
+roleRef:
+  kind: Role
+  name: pod-auto-healer
+  apiGroup: rbac.authorization.k8s.io

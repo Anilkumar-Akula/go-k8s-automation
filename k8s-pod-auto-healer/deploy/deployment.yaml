@@ -1,0 +1,47 @@
+# replicas: 1 is deliberate — running >1 without leader election would
+# let two healers race to remediate the same pod. Add leader election
+# (client-go/tools/leaderelection) before scaling this out.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-auto-healer
+  namespace: auto-healer-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod-auto-healer
+  template:
+    metadata:
+      labels:
+        app: pod-auto-healer
+    spec:
+      serviceAccountName: pod-auto-healer
+      containers:
+        - name: auto-healer
+          image: pod-auto-healer:latest
+          ports:
+            - name: metrics
+              containerPort: 8080
+          env:
+            - name: TARGET_NAMESPACE
+              value: auto-healer-demo
+            - name: MAX_REMEDIATION_ATTEMPTS
+              value: "3"
+            - name: INITIAL_BACKOFF
+              value: "2s"
+            - name: RESTART_THRESHOLD
+              value: "3"
+            - name: RETRY_TTL
+              value: "10m"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
