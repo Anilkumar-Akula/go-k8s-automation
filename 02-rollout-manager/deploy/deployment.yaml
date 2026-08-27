@@ -1,0 +1,45 @@
+# replicas: 1 is deliberate — running >1 without leader election would let
+# two managers race to roll back the same Deployment. Add leader election
+# (client-go/tools/leaderelection) before scaling this out.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rollout-manager
+  namespace: rollout-manager-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rollout-manager
+  template:
+    metadata:
+      labels:
+        app: rollout-manager
+    spec:
+      serviceAccountName: rollout-manager
+      containers:
+        - name: rollout-manager
+          image: rollout-manager:latest
+          ports:
+            - name: metrics
+              containerPort: 8080
+          env:
+            - name: TARGET_NAMESPACE
+              value: rollout-manager-demo
+            - name: MAX_ROLLBACK_ATTEMPTS
+              value: "3"
+            - name: INITIAL_BACKOFF
+              value: "2s"
+            - name: RETRY_TTL
+              value: "10m"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true

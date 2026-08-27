@@ -14,7 +14,7 @@ Each project is a standalone Go module in its own directory.
 | # | Project | Description | Status |
 |---|---|---|---|
 | 01 | [Pod Auto-Healer](./01-pod-auto-healer) | Detect unhealthy Pods, remediate with owner-aware retry + exponential backoff | ✅ Complete |
-| 02 | Deployment Rollout Manager | Automated rollout monitoring and rollback | 🔜 Planned |
+| 02 | [Deployment Rollout Manager](./02-rollout-manager) | Automated rollout monitoring and rollback | ✅ Complete |
 | 03 | Kubernetes Resource Optimizer | Analyze CPU/memory usage, recommend request/limit changes | 🔜 Planned |
 | 04 | Auto-Scaling Controller | Custom scaling driven by application metrics | 🔜 Planned |
 | 05 | Kubernetes Cost Optimizer | Find over-provisioned workloads, reduce resource waste | 🔜 Planned |
@@ -42,7 +42,13 @@ go-k8s-automation/
 │   ├── Dockerfile
 │   ├── go.mod
 │   └── README.md
-├── 02-rollout-manager/       (planned)
+├── 02-rollout-manager/
+│   ├── cmd/
+│   ├── internal/
+│   ├── deploy/
+│   ├── Dockerfile
+│   ├── go.mod
+│   └── README.md
 ├── 03-resource-optimizer/    (planned)
 ├── 04-autoscaler/            (planned)
 ├── 05-cost-optimizer/        (planned)
@@ -83,6 +89,33 @@ and a pod-termination-window race), graceful shutdown, Prometheus metrics,
 least-privilege RBAC, and end-to-end verification against a live cluster —
 not just unit tests.
 
+## Project 02 — Deployment Rollout Manager
+
+Full detail in [`02-rollout-manager/README.md`](./02-rollout-manager). Summary:
+
+```
+Kubernetes API
+      │
+ self-reconnecting watch (Deployments)
+      │
+ stuck-rollout detector (Progressing condition == False, ProgressDeadlineExceeded)
+      │
+ in-flight dedup guard (1 goroutine per Deployment)
+      │
+ previous-revision lookup (owned ReplicaSets, revision annotation)
+      │
+ per-workload retrier (exponential backoff, TTL cleanup)
+      │
+ patch Deployment.spec.template back to the previous ReplicaSet's template
+```
+
+Demonstrates: reusing native Kubernetes signals instead of reimplementing
+them (the Deployment controller's own `Progressing`/`ProgressDeadlineExceeded`
+condition and revision-annotated ReplicaSet history — the same two things
+`kubectl rollout status` and `kubectl rollout undo` read), Prometheus
+metrics, least-privilege RBAC, and the same watch/retry/backoff
+concurrency pattern as project 01.
+
 ## Roadmap
 
 **Phase 1 — Kubernetes fundamentals** *(done, project 01)*
@@ -103,10 +136,10 @@ not just unit tests.
 - [ ] Rate limiting
 
 **Phase 3 — Advanced automation**
-- [ ] Deployment/rollout controller (project 02)
+- [x] Deployment/rollout controller (project 02)
+- [x] Automated rollback (project 02)
 - [ ] Custom Resource Definition
 - [ ] Kubernetes Operator
-- [ ] Automated rollback
 
 **Phase 4 — Cloud native**
 - [ ] GitHub Actions CI

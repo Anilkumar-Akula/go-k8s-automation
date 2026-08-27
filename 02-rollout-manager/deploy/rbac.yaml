@@ -1,0 +1,29 @@
+# Namespaced Role, not ClusterRole: the manager only watches/rolls back
+# Deployments in TARGET_NAMESPACE, so it should not be able to touch
+# workloads anywhere else.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rollout-manager
+  namespace: rollout-manager-demo
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rollout-manager
+  namespace: rollout-manager-demo
+subjects:
+  - kind: ServiceAccount
+    name: rollout-manager
+    namespace: rollout-manager-demo
+roleRef:
+  kind: Role
+  name: rollout-manager
+  apiGroup: rbac.authorization.k8s.io
