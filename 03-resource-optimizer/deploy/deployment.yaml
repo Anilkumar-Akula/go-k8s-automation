@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-optimizer
+  namespace: resource-optimizer-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resource-optimizer
+  template:
+    metadata:
+      labels:
+        app: resource-optimizer
+    spec:
+      serviceAccountName: resource-optimizer
+      containers:
+        - name: resource-optimizer
+          image: resource-optimizer:latest
+          ports:
+            - name: metrics
+              containerPort: 8080
+          env:
+            - name: TARGET_NAMESPACE
+              value: resource-optimizer-demo
+            - name: POLL_INTERVAL
+              value: "30s"
+            - name: WINDOW_SIZE
+              value: "60"
+            - name: MIN_SAMPLES
+              value: "5"
+            - name: WINDOW_TTL
+              value: "15m"
+            - name: DRIFT_THRESHOLD
+              value: "0.3"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true

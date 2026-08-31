@@ -1,0 +1,29 @@
+# Namespaced Role: read-only access to Pod specs (for requests/limits) and
+# metrics-server's PodMetrics (for live usage) in TARGET_NAMESPACE. This
+# service never writes to the cluster — it only recommends.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: resource-optimizer
+  namespace: resource-optimizer-demo
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: resource-optimizer
+  namespace: resource-optimizer-demo
+subjects:
+  - kind: ServiceAccount
+    name: resource-optimizer
+    namespace: resource-optimizer-demo
+roleRef:
+  kind: Role
+  name: resource-optimizer
+  apiGroup: rbac.authorization.k8s.io

@@ -15,7 +15,7 @@ Each project is a standalone Go module in its own directory.
 |---|---|---|---|
 | 01 | [Pod Auto-Healer](./01-pod-auto-healer) | Detect unhealthy Pods, remediate with owner-aware retry + exponential backoff | ✅ Complete |
 | 02 | [Deployment Rollout Manager](./02-rollout-manager) | Automated rollout monitoring and rollback | ✅ Complete |
-| 03 | Kubernetes Resource Optimizer | Analyze CPU/memory usage, recommend request/limit changes | 🔜 Planned |
+| 03 | [Kubernetes Resource Optimizer](./03-resource-optimizer) | Analyze CPU/memory usage, recommend request/limit changes | ✅ Complete |
 | 04 | Auto-Scaling Controller | Custom scaling driven by application metrics | 🔜 Planned |
 | 05 | Kubernetes Cost Optimizer | Find over-provisioned workloads, reduce resource waste | 🔜 Planned |
 | 06 | Canary Deployment Controller | Gradual traffic shift with automatic rollback on errors | 🔜 Planned |
@@ -49,7 +49,13 @@ go-k8s-automation/
 │   ├── Dockerfile
 │   ├── go.mod
 │   └── README.md
-├── 03-resource-optimizer/    (planned)
+├── 03-resource-optimizer/
+│   ├── cmd/
+│   ├── internal/
+│   ├── deploy/
+│   ├── Dockerfile
+│   ├── go.mod
+│   └── README.md
 ├── 04-autoscaler/            (planned)
 ├── 05-cost-optimizer/        (planned)
 ├── 06-canary-controller/     (planned)
@@ -115,6 +121,31 @@ condition and revision-annotated ReplicaSet history — the same two things
 `kubectl rollout status` and `kubectl rollout undo` read), Prometheus
 metrics, least-privilege RBAC, and the same watch/retry/backoff
 concurrency pattern as project 01.
+
+## Project 03 — Kubernetes Resource Optimizer
+
+Full detail in [`03-resource-optimizer/README.md`](./03-resource-optimizer). Summary:
+
+```
+Kubernetes API (Pod specs) + metrics.k8s.io (PodMetrics)
+      │
+ sampler joins usage to configured requests/limits by pod/container
+      │
+ per-container rolling window of usage samples
+      │
+ percentile recommender (p50 -> request, p90 -> limit)
+      │
+ drift check vs. configured request/limit
+      │
+ Prometheus gauges + structured log warnings (no patching)
+```
+
+Demonstrates: the `metrics.k8s.io` client (separate from the core
+client-go clientset used in projects 01/02), a VPA-style percentile
+recommender instead of a fixed usage-plus-margin rule, and a
+read-only design — this project only recommends, since patching live
+requests/limits can restart Pods and shouldn't happen without an
+explicit, separate authorization step.
 
 ## Roadmap
 
