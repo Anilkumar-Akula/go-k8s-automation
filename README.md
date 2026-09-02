@@ -17,6 +17,7 @@ Each project is a standalone Go module in its own directory.
 | 02 | [Deployment Rollout Manager](./02-rollout-manager) | Automated rollout monitoring and rollback | ✅ Complete |
 | 03 | [Kubernetes Resource Optimizer](./03-resource-optimizer) | Analyze CPU/memory usage, recommend request/limit changes | ✅ Complete |
 | 04 | [Auto-Scaling Controller](./04-autoscaler) | Custom scaling driven by application metrics | ✅ Complete |
+| 📊 | [Unified Automation Dashboard](./dashboard) | Real-time control plane UI visualizing all automation engines | ✅ Complete |
 | 05 | Kubernetes Cost Optimizer | Find over-provisioned workloads, reduce resource waste | 🔜 Planned |
 | 06 | Canary Deployment Controller | Gradual traffic shift with automatic rollback on errors | 🔜 Planned |
 | 07 | PostgreSQL Kubernetes Operator | Operator managing DB lifecycle, backup, failover | 🔜 Planned |
@@ -28,8 +29,9 @@ Each project is a standalone Go module in its own directory.
 
 **Backend** — Go, client-go, goroutines/channels/context, concurrency patterns
 **Kubernetes** — Pods, Deployments, ReplicaSets, RBAC, Watch API, controllers
+**Frontend / UI** — Modern Dark Mode Dashboard, Server-Sent Events (SSE), Glassmorphism
 **Infra** — Docker, Kind, docker-desktop Kubernetes, kubectl
-**Observability** — Prometheus metrics, structured logging (`log/slog`)
+**Observability** — Prometheus metrics, structured logging (`log/slog`), SSE live streams
 
 ## Repository structure
 
@@ -59,6 +61,14 @@ go-k8s-automation/
 ├── 04-autoscaler/
 │   ├── cmd/
 │   ├── internal/
+│   ├── deploy/
+│   ├── Dockerfile
+│   ├── go.mod
+│   └── README.md
+├── dashboard/
+│   ├── cmd/server/
+│   ├── internal/
+│   ├── web/
 │   ├── deploy/
 │   ├── Dockerfile
 │   ├── go.mod

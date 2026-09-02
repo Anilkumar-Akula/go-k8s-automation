@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Binaries & build artifacts
+bin/
+*.exe
+*.test
+*.out
+
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+
+# IDE
+.idea/
+.vscode/

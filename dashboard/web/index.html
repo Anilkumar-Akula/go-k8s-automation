@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K8s Automation Control Plane | SRE & Platform Engineering</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h2>K8s Control Plane</h2>
+          <span>Go Automation Suite</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-menu">
+        <button class="nav-item active" data-tab="overview">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Overview Radar</span>
+        </button>
+        <button class="nav-item" data-tab="healer">
+          <span class="nav-icon">🛡️</span>
+          <span class="nav-label">01 Auto-Healer</span>
+          <span class="badge badge-warning" id="nav-unhealthy-count">0</span>
+        </button>
+        <button class="nav-item" data-tab="rollouts">
+          <span class="nav-icon">🔄</span>
+          <span class="nav-label">02 Rollout Manager</span>
+          <span class="badge badge-danger" id="nav-stuck-count">0</span>
+        </button>
+        <button class="nav-item" data-tab="optimizer">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">03 Resource Optimizer</span>
+        </button>
+        <button class="nav-item" data-tab="scaler">
+          <span class="nav-icon">📈</span>
+          <span class="nav-label">04 Horizontal Scaler</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="cluster-status-box">
+          <div class="cluster-header">
+            <span class="status-indicator live" id="cluster-indicator"></span>
+            <span class="cluster-title" id="cluster-name">Detecting...</span>
+          </div>
+          <div class="mode-toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" id="mode-toggle-checkbox">
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label" id="mode-label">Simulation Mode</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <h1 id="page-title">Overview Control Plane</h1>
+          <p class="subtitle" id="page-subtitle">Unified observability and autonomous lifecycle controllers</p>
+        </div>
+        <div class="header-actions">
+          <div class="live-stream-badge">
+            <span class="pulse-dot"></span>
+            <span id="stream-status-text">SSE Live Stream Active</span>
+          </div>
+          <button class="btn btn-secondary" id="btn-refresh" title="Refresh cluster data">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6"></path>
+              <path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      <!-- Tab: Overview -->
+      <section class="tab-pane active" id="pane-overview">
+        <!-- Key Metrics Cards -->
+        <div class="stats-grid">
+          <div class="stat-card stat-cyan">
+            <div class="stat-icon">🛡️</div>
+            <div class="stat-body">
+              <span class="stat-label">Pods Monitored / Healed</span>
+              <div class="stat-value"><span id="stat-total-pods">0</span> <small class="text-success">(<span id="stat-healed-pods">0</span> auto-healed)</small></div>
+              <span class="stat-meta" id="stat-unhealthy-pods-meta">0 in failure backoff</span>
+            </div>
+          </div>
+
+          <div class="stat-card stat-indigo">
+            <div class="stat-icon">🔄</div>
+            <div class="stat-body">
+              <span class="stat-label">Deployments & Rollbacks</span>
+              <div class="stat-value"><span id="stat-deployments">0</span> <small class="text-warning">(<span id="stat-rollbacks">0</span> rolled back)</small></div>
+              <span class="stat-meta" id="stat-stuck-rollouts-meta">0 stuck rollouts</span>
+            </div>
+          </div>
+
+          <div class="stat-card stat-emerald">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-body">
+              <span class="stat-label">Right-Sizing Opportunity</span>
+              <div class="stat-value"><span id="stat-waste-milli">0</span>m <small>CPU</small></div>
+              <span class="stat-meta"><span id="stat-containers-optimized">0</span> containers profiled</span>
+            </div>
+          </div>
+
+          <div class="stat-card stat-amber">
+            <div class="stat-icon">📈</div>
+            <div class="stat-body">
+              <span class="stat-label">Autoscaling Activity</span>
+              <div class="stat-value"><span id="stat-scale-events">0</span> <small>events</small></div>
+              <span class="stat-meta">Asymmetric cooldown active</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Automation Modules Radar Summary -->
+        <div class="section-title-wrap">
+          <h2>Automation Controllers Status</h2>
+          <span class="badge badge-info">Active Reconcilers</span>
+        </div>
+
+        <div class="controllers-grid">
+          <!-- 01 Pod Auto-Healer Widget -->
+          <div class="controller-card">
+            <div class="controller-header">
+              <div class="controller-title">
+                <span class="c-tag">Project 01</span>
+                <h3>Pod Auto-Healer</h3>
+              </div>
+              <span class="status-pill status-active">Reconciling</span>
+            </div>
+            <p class="controller-desc">Owner-aware remediation with exponential backoff & in-flight goroutine dedup.</p>
+            <div class="controller-metrics">
+              <div class="metric-row"><span>CrashLoop / OOM Checks</span><strong>Active</strong></div>
+              <div class="metric-row"><span>Safety Filter (Bare/Jobs)</span><strong class="text-success">Enforced</strong></div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="switchTab('healer')">View Pod Health Table &rarr;</button>
+          </div>
+
+          <!-- 02 Rollout Manager Widget -->
+          <div class="controller-card">
+            <div class="controller-header">
+              <div class="controller-title">
+                <span class="c-tag">Project 02</span>
+                <h3>Deployment Rollout Manager</h3>
+              </div>
+              <span class="status-pill status-active">Watching</span>
+            </div>
+            <p class="controller-desc">ProgressDeadlineExceeded detection with automatic ReplicaSet revision rollback.</p>
+            <div class="controller-metrics">
+              <div class="metric-row"><span>Watch API Connection</span><strong>Connected</strong></div>
+              <div class="metric-row"><span>Revision Safety Check</span><strong class="text-success">Verified</strong></div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="switchTab('rollouts')">View Rollouts Timeline &rarr;</button>
+          </div>
+
+          <!-- 03 Resource Optimizer Widget -->
+          <div class="controller-card">
+            <div class="controller-header">
+              <div class="controller-title">
+                <span class="c-tag">Project 03</span>
+                <h3>Resource Optimizer</h3>
+              </div>
+              <span class="status-pill status-active">Profiling</span>
+            </div>
+            <p class="controller-desc">VPA-style percentile sampling (p50 requests / p90 limits) vs live metrics.k8s.io.</p>
+            <div class="controller-metrics">
+              <div class="metric-row"><span>Sampling Engine</span><strong>metrics.k8s.io</strong></div>
+              <div class="metric-row"><span>Drift Detection</span><strong class="text-warning">30% Threshold</strong></div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="switchTab('optimizer')">View Recommendations &rarr;</button>
+          </div>
+
+          <!-- 04 Horizontal Autoscaler Widget -->
+          <div class="controller-card">
+            <div class="controller-header">
+              <div class="controller-title">
+                <span class="c-tag">Project 04</span>
+                <h3>Horizontal Autoscaler</h3>
+              </div>
+              <span class="status-pill status-active">Sampling</span>
+            </div>
+            <p class="controller-desc">Ratio formula <code>ceil(current * obs/tgt)</code> with asymmetric cooldown protection.</p>
+            <div class="controller-metrics">
+              <div class="metric-row"><span>Scale-Up Cooldown</span><strong>60s</strong></div>
+              <div class="metric-row"><span>Scale-Down Cooldown</span><strong>300s</strong></div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="switchTab('scaler')">View Autoscaler Gauges &rarr;</button>
+          </div>
+        </div>
+
+        <!-- Real-time Activity Timeline -->
+        <div class="card event-feed-card">
+          <div class="card-header">
+            <div class="card-title">
+              <h3>Live Cluster Automation Stream</h3>
+              <span class="subtext">Real-time decisions emitted by controllers via Server-Sent Events</span>
+            </div>
+            <button class="btn btn-xs btn-outline" id="btn-clear-feed">Clear Stream</button>
+          </div>
+          <div class="events-list" id="global-events-list">
+            <!-- Events injected dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab: 01 Pod Auto-Healer -->
+      <section class="tab-pane" id="pane-healer">
+        <div class="section-banner">
+          <div>
+            <h2>01 — Pod Auto-Healer Dashboard</h2>
+            <p>Watches pod lifecycle events, identifies crash looping / failed containers, respects owner hierarchies, and applies exponential backoff deduplication.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Monitored Pods & Health Evaluations</h3>
+            <div class="filter-group">
+              <span class="filter-chip active" data-filter="all">All</span>
+              <span class="filter-chip" data-filter="unhealthy">Unhealthy Only</span>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="healer-table">
+              <thead>
+                <tr>
+                  <th>Pod Name & Namespace</th>
+                  <th>Status</th>
+                  <th>Failure Reason</th>
+                  <th>Owner Resolution</th>
+                  <th>Restarts</th>
+                  <th>Heal Status & Backoff</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="healer-tbody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab: 02 Rollout Manager -->
+      <section class="tab-pane" id="pane-rollouts">
+        <div class="section-banner">
+          <div>
+            <h2>02 — Deployment Rollout Manager</h2>
+            <p>Monitors <code>ProgressDeadlineExceeded</code> signals, identifies failed canary / blue-green releases, and automatically restores previous ReplicaSet templates.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Deployment Reconciler & Revision History</h3>
+          </div>
+          <div class="deployments-grid" id="rollouts-grid">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab: 03 Resource Optimizer -->
+      <section class="tab-pane" id="pane-optimizer">
+        <div class="section-banner">
+          <div>
+            <h2>03 — Kubernetes Resource Optimizer</h2>
+            <p>Samples live CPU/RAM utilization distributions, derives $p50$ request and $p90$ limit recommendations, and flags allocation drift.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Right-Sizing Recommendations</h3>
+            <span class="badge badge-info">p50 Request / p90 Limit Analysis</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="optimizer-table">
+              <thead>
+                <tr>
+                  <th>Container / Workload</th>
+                  <th>Current Request / Limit</th>
+                  <th>Recommended (p50 / p90)</th>
+                  <th>CPU Drift</th>
+                  <th>Memory Drift</th>
+                  <th>Analysis</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="optimizer-tbody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab: 04 Horizontal Autoscaler -->
+      <section class="tab-pane" id="pane-scaler">
+        <div class="section-banner">
+          <div>
+            <h2>04 — Horizontal Autoscaler (HPA-Style)</h2>
+            <p>Ratio-driven autoscaler utilizing the <code>/scale</code> subresource with asymmetric cooldowns (fast up, stabilized down) and tolerance thresholds.</p>
+          </div>
+        </div>
+
+        <div class="scaler-dashboard-grid">
+          <!-- Live Gauge Card -->
+          <div class="card scaler-gauge-card">
+            <h3>CPU Utilization Gauge</h3>
+            <div class="gauge-wrap">
+              <div class="radial-gauge" id="scaler-gauge">
+                <div class="gauge-inner">
+                  <span class="gauge-value" id="scaler-cpu-val">--%</span>
+                  <span class="gauge-label">Observed CPU</span>
+                </div>
+              </div>
+            </div>
+            <div class="gauge-footer">
+              <div>Target: <strong id="scaler-target-val">50%</strong></div>
+              <div>Tolerance: <strong>±10%</strong></div>
+            </div>
+          </div>
+
+          <!-- Replicas & Cooldown Info -->
+          <div class="card scaler-status-card">
+            <h3>Replica Management & Stabilization</h3>
+            <div class="replica-counter-wrap">
+              <div class="replica-box current">
+                <span class="r-label">Current Replicas</span>
+                <span class="r-val" id="scaler-current-rep">--</span>
+              </div>
+              <div class="replica-arrow">&rarr;</div>
+              <div class="replica-box desired">
+                <span class="r-label">Desired Replicas</span>
+                <span class="r-val" id="scaler-desired-rep">--</span>
+              </div>
+            </div>
+
+            <div class="cooldown-timers">
+              <div class="timer-item">
+                <span class="timer-title">Scale-Up Policy</span>
+                <span class="timer-status text-success">Immediate (60s cooldown)</span>
+              </div>
+              <div class="timer-item">
+                <span class="timer-title">Scale-Down Stabilization</span>
+                <span class="timer-status text-warning" id="scaler-down-cooldown">Active (300s window)</span>
+              </div>
+            </div>
+
+            <div class="scaler-meta-grid">
+              <div>Namespace: <strong id="scaler-ns">autoscaler-demo</strong></div>
+              <div>Deployment: <strong id="scaler-dep">demo-app</strong></div>
+              <div>Min / Max Replicas: <strong id="scaler-bounds">1 / 10</strong></div>
+              <div>Scale Events: <strong id="scaler-total-evts">0</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Interactive Apply Recommendation Modal -->
+  <div class="modal-overlay" id="optimizer-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Preview & Apply Resource Patch</h3>
+        <button class="modal-close" id="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>This will patch the Deployment's container resources to match the $p50$ and $p90$ recommendations calculated by <strong>03-resource-optimizer</strong>.</p>
+        <pre class="code-preview" id="modal-patch-preview"></pre>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-apply">Apply Recommendation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
