@@ -55,3 +55,56 @@ export interface Overview {
   automations: AutomationSummary[];
   recentEvents: DashboardEvent[];
 }
+
+export interface HealerDetail {
+  podsChecked: number;
+  remediationTotal: number;
+  remediationFailures: number;
+  watchReconnects: number;
+  unhealthyByReason: Record<string, number>;
+}
+
+export interface RolloutDetail {
+  deploymentsChecked: number;
+  rollbackTotal: number;
+  rollbackFailures: number;
+  watchReconnects: number;
+  stuckByReason: Record<string, number>;
+}
+
+export interface Recommendation {
+  namespace: string;
+  pod: string;
+  container: string;
+  reqCpuMilli: number;
+  limCpuMilli: number;
+  reqMemBytes: number;
+  limMemBytes: number;
+}
+
+export interface DriftEntry {
+  namespace: string;
+  pod: string;
+  container: string;
+  resource: string;
+  field: string;
+  direction: "under" | "over";
+  count: number;
+}
+
+export interface OptimizerDetail {
+  containersTracked: number;
+  samplesCollected: number;
+  recommendations: Recommendation[] | null;
+  drift: DriftEntry[] | null;
+}
+
+export interface AutoscalerDetail {
+  namespace: string;
+  deployment: string;
+  currentReplicas: number;
+  desiredReplicas: number;
+  utilizationPercent: number;
+  scaleUpEvents: number;
+  scaleDownEvents: number;
+}

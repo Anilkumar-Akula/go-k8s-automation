@@ -1,4 +1,5 @@
 import { apiGet } from "../api/client";
+import StatCard from "../components/StatCard";
 import { usePolling } from "../hooks/usePolling";
 import type { AutomationSummary, Overview as OverviewData } from "../types/dashboard";
 
@@ -36,24 +37,10 @@ export default function Overview() {
       <h1>Overview</h1>
 
       <div className="stat-grid">
-        <div className="stat-card">
-          <span className="stat-label">Nodes</span>
-          <span className="stat-value">
-            {cluster.nodesReady}/{cluster.nodeCount}
-          </span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Pods running</span>
-          <span className="stat-value">{cluster.podsRunning}</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Pods pending</span>
-          <span className="stat-value">{cluster.podsPending}</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Pods failed</span>
-          <span className="stat-value">{cluster.podsFailed}</span>
-        </div>
+        <StatCard label="Nodes" value={`${cluster.nodesReady}/${cluster.nodeCount}`} />
+        <StatCard label="Pods running" value={cluster.podsRunning} />
+        <StatCard label="Pods pending" value={cluster.podsPending} />
+        <StatCard label="Pods failed" value={cluster.podsFailed} />
       </div>
 
       <h2>Automations</h2>

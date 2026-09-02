@@ -219,6 +219,42 @@ body {
   color: var(--text-h);
 }
 
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+th {
+  color: var(--text);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+td {
+  color: var(--text-h);
+}
+
+.drift-under {
+  color: #e5a545;
+}
+
+.drift-over {
+  color: var(--accent);
+}
+
 h1,
 h2 {
   font-family: var(--heading);
