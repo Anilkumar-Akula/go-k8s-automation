@@ -17,7 +17,7 @@ Each project is a standalone Go module in its own directory.
 | 02 | [Deployment Rollout Manager](./02-rollout-manager) | Automated rollout monitoring and rollback | ✅ Complete |
 | 03 | [Kubernetes Resource Optimizer](./03-resource-optimizer) | Analyze CPU/memory usage, recommend request/limit changes | ✅ Complete |
 | 04 | [Auto-Scaling Controller](./04-autoscaler) | Custom scaling driven by application metrics | ✅ Complete |
-| 📊 | [Unified Automation Dashboard](./dashboard) | Go API + React UI aggregating all 4 controllers into one control/observability layer | 🚧 In progress (Phase 2: React shell) |
+| 📊 | [Unified Automation Dashboard](./dashboard) | Go API + React UI aggregating all 4 controllers into one control/observability layer | 🚧 In progress (Phase 3: Overview page live) |
 | 05 | Kubernetes Cost Optimizer | Find over-provisioned workloads, reduce resource waste | 🔜 Planned |
 | 06 | Canary Deployment Controller | Gradual traffic shift with automatic rollback on errors | 🔜 Planned |
 | 07 | PostgreSQL Kubernetes Operator | Operator managing DB lifecycle, backup, failover | 🔜 Planned |
