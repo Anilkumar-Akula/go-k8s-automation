@@ -12,7 +12,7 @@ export default function EventList({ source, limit = 20 }: EventListProps) {
   if (source) params.set("source", source);
 
   const { data, error, loading } = usePolling<DashboardEvent[]>(() =>
-    apiGet(`/api/events?${params.toString()}`),
+    apiGet(`/api/v1/events?${params.toString()}`),
   );
 
   if (loading) return <p className="placeholder-note">Loading...</p>;

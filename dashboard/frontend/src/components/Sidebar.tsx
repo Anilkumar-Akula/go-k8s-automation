@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: "/resource-optimizer", label: "Resource Optimizer" },
   { to: "/autoscaler", label: "Auto-Scaling Controller" },
   { to: "/events", label: "Live Events" },
+  { to: "/audit", label: "Audit History" },
 ];
 
 export default function Sidebar() {

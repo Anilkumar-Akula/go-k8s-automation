@@ -9,9 +9,12 @@ import (
 	"syscall"
 	"time"
 
+	"dashboard-api/internal/actions"
 	"dashboard-api/internal/api"
+	"dashboard-api/internal/audit"
 	"dashboard-api/internal/config"
 	"dashboard-api/internal/events"
+	"dashboard-api/internal/idempotency"
 	"dashboard-api/internal/kclient"
 	"dashboard-api/internal/poller"
 )
@@ -37,7 +40,17 @@ func main() {
 	store := events.NewStore(cfg.EventBuffer)
 	go poller.Run(ctx, cfg, clientset, cache, store)
 
-	server := api.NewServer(cfg, cache, store)
+	auditStore, err := audit.Open(cfg.AuditDBPath)
+	if err != nil {
+		slog.Error("failed to open audit database", "error", err)
+		os.Exit(1)
+	}
+	defer auditStore.Close()
+
+	executor := actions.NewExecutor(clientset)
+	idemGuard := idempotency.NewGuard(cfg.IdempotencyTTL)
+
+	server := api.NewServer(cfg, clientset, cache, store, executor, auditStore, idemGuard)
 	httpSrv := &http.Server{Addr: cfg.ListenAddr, Handler: server.Routes()}
 
 	go func() {

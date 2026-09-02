@@ -1,14 +1,18 @@
+import { useState } from "react";
+import { applyRecommendation } from "../api/actions";
 import { apiGet } from "../api/client";
+import ConfirmDialog from "../components/ConfirmDialog";
 import EventList from "../components/EventList";
 import StatCard from "../components/StatCard";
 import { usePolling } from "../hooks/usePolling";
 import { formatBytes, formatMilli } from "../lib/format";
-import type { OptimizerDetail } from "../types/dashboard";
+import type { OptimizerDetail, Recommendation } from "../types/dashboard";
 
 export default function ResourceOptimizer() {
   const { data, error, loading } = usePolling<OptimizerDetail>(() =>
-    apiGet("/api/resource-optimizer"),
+    apiGet("/api/v1/resource-optimizer"),
   );
+  const [target, setTarget] = useState<Recommendation | null>(null);
 
   if (loading) return <p className="placeholder-note">Loading...</p>;
   if (error) return <p className="placeholder-note">Failed to load: {error}</p>;
@@ -41,6 +45,7 @@ export default function ResourceOptimizer() {
                 <th>Lim CPU</th>
                 <th>Req Mem</th>
                 <th>Lim Mem</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -54,6 +59,11 @@ export default function ResourceOptimizer() {
                   <td>{formatMilli(r.limCpuMilli)}</td>
                   <td>{formatBytes(r.reqMemBytes)}</td>
                   <td>{formatBytes(r.limMemBytes)}</td>
+                  <td>
+                    <button className="btn-secondary" onClick={() => setTarget(r)}>
+                      Apply
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -97,6 +107,21 @@ export default function ResourceOptimizer() {
 
       <h2>Recent events</h2>
       <EventList source="resource-optimizer" />
+
+      {target && (
+        <ConfirmDialog
+          title="Apply Recommendation"
+          fields={[
+            { label: "Namespace", value: target.namespace },
+            { label: "Pod", value: target.pod },
+            { label: "Container", value: target.container },
+            { label: "New request", value: `cpu ${formatMilli(target.reqCpuMilli)}, mem ${formatBytes(target.reqMemBytes)}` },
+            { label: "New limit", value: `cpu ${formatMilli(target.limCpuMilli)}, mem ${formatBytes(target.limMemBytes)}` },
+          ]}
+          execute={(reason) => applyRecommendation(target.namespace, target.pod, target.container, reason)}
+          onClose={() => setTarget(null)}
+        />
+      )}
     </section>
   );
 }

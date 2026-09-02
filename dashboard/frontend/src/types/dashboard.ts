@@ -108,3 +108,36 @@ export interface AutoscalerDetail {
   scaleUpEvents: number;
   scaleDownEvents: number;
 }
+
+export interface UnhealthyPod {
+  namespace: string;
+  pod: string;
+  reason: string;
+}
+
+export interface StuckDeployment {
+  namespace: string;
+  deployment: string;
+  reason: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  timestamp: string;
+  actor: string;
+  action: string;
+  project: string;
+  namespace: string;
+  resource: string;
+  oldValue?: string;
+  newValue?: string;
+  reason: string;
+  status: "success" | "failed";
+}
+
+export interface ActionResult {
+  status: string;
+  oldValue?: string;
+  newValue?: string;
+  audit: AuditEvent;
+}

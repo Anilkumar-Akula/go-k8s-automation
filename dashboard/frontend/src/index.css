@@ -255,6 +255,133 @@ td {
   color: var(--accent);
 }
 
+.status-success {
+  color: #3fb950;
+}
+
+.status-failed {
+  color: #e5534b;
+}
+
+.action-bar {
+  margin-top: 10px;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-h);
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.dialog {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  box-shadow: var(--shadow);
+}
+
+.dialog h3 {
+  margin: 0 0 14px;
+  font-size: 16px;
+  color: var(--text-h);
+}
+
+.dialog-fields {
+  margin: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dialog-fields > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.dialog-fields dt {
+  color: var(--text);
+}
+
+.dialog-fields dd {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 500;
+}
+
+.dialog-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+.dialog-label textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  font: inherit;
+  font-size: 13px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text-h);
+  resize: vertical;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dialog-status {
+  font-size: 14px;
+  margin: 0 0 14px;
+}
+
+.dialog-status-success {
+  color: #3fb950;
+}
+
+.dialog-status-error {
+  color: #e5534b;
+}
+
 h1,
 h2 {
   font-family: var(--heading);

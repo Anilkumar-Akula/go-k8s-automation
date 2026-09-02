@@ -6,6 +6,7 @@ import RolloutManager from "./pages/RolloutManager";
 import ResourceOptimizer from "./pages/ResourceOptimizer";
 import Autoscaler from "./pages/Autoscaler";
 import LiveEvents from "./pages/LiveEvents";
+import Audit from "./pages/Audit";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="resource-optimizer" element={<ResourceOptimizer />} />
           <Route path="autoscaler" element={<Autoscaler />} />
           <Route path="events" element={<LiveEvents />} />
+          <Route path="audit" element={<Audit />} />
         </Route>
       </Routes>
     </BrowserRouter>

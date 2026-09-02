@@ -24,7 +24,7 @@ function automationHeadline(a: AutomationSummary): string {
 }
 
 export default function Overview() {
-  const { data, error, loading } = usePolling<OverviewData>(() => apiGet("/api/overview"));
+  const { data, error, loading } = usePolling<OverviewData>(() => apiGet("/api/v1/overview"));
 
   if (loading) return <p className="placeholder-note">Loading...</p>;
   if (error) return <p className="placeholder-note">Failed to load overview: {error}</p>;

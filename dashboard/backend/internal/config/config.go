@@ -18,6 +18,14 @@ type Config struct {
 	RolloutManager    ControllerTarget
 	ResourceOptimizer ControllerTarget
 	Autoscaler        AutoscalerTarget
+
+	// Actions (Phase 5: control layer)
+	ActionsMaxReplicas int32
+	IdempotencyTTL     time.Duration
+	AuditDBPath        string
+	// Actor is recorded on every audit event. Hardcoded until Phase 6
+	// (authentication) gives us real per-request identity.
+	Actor string
 }
 
 // ControllerTarget is where to scrape one controller's Prometheus metrics
@@ -64,6 +72,11 @@ func Load() Config {
 			},
 			Deployment: getEnv("AUTOSCALER_DEPLOYMENT", "demo-app"),
 		},
+
+		ActionsMaxReplicas: int32(getEnvInt("ACTIONS_MAX_REPLICAS", 20)),
+		IdempotencyTTL:     getEnvDuration("IDEMPOTENCY_TTL", 10*time.Minute),
+		AuditDBPath:        getEnv("AUDIT_DB_PATH", "dashboard-audit.db"),
+		Actor:              getEnv("ACTOR", "operator"),
 	}
 }
 
