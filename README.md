@@ -17,7 +17,7 @@ Each project is a standalone Go module in its own directory.
 | 02 | [Deployment Rollout Manager](./02-rollout-manager) | Automated rollout monitoring and rollback | ✅ Complete |
 | 03 | [Kubernetes Resource Optimizer](./03-resource-optimizer) | Analyze CPU/memory usage, recommend request/limit changes | ✅ Complete |
 | 04 | [Auto-Scaling Controller](./04-autoscaler) | Custom scaling driven by application metrics | ✅ Complete |
-| 📊 | [Unified Automation Dashboard](./dashboard) | Real-time control plane UI visualizing all automation engines | ✅ Complete |
+| 📊 | [Unified Automation Dashboard](./dashboard) | Go API aggregating all 4 controllers' metrics into one control/observability layer | 🚧 In progress (Phase 1: API) |
 | 05 | Kubernetes Cost Optimizer | Find over-provisioned workloads, reduce resource waste | 🔜 Planned |
 | 06 | Canary Deployment Controller | Gradual traffic shift with automatic rollback on errors | 🔜 Planned |
 | 07 | PostgreSQL Kubernetes Operator | Operator managing DB lifecycle, backup, failover | 🔜 Planned |
@@ -29,9 +29,8 @@ Each project is a standalone Go module in its own directory.
 
 **Backend** — Go, client-go, goroutines/channels/context, concurrency patterns
 **Kubernetes** — Pods, Deployments, ReplicaSets, RBAC, Watch API, controllers
-**Frontend / UI** — Modern Dark Mode Dashboard, Server-Sent Events (SSE), Glassmorphism
 **Infra** — Docker, Kind, docker-desktop Kubernetes, kubectl
-**Observability** — Prometheus metrics, structured logging (`log/slog`), SSE live streams
+**Observability** — Prometheus metrics, structured logging (`log/slog`)
 
 ## Repository structure
 
@@ -66,13 +65,7 @@ go-k8s-automation/
 │   ├── go.mod
 │   └── README.md
 ├── dashboard/
-│   ├── cmd/server/
-│   ├── internal/
-│   ├── web/
-│   ├── deploy/
-│   ├── Dockerfile
-│   ├── go.mod
-│   └── README.md
+│   └── backend/              (Phase 1: Go API — cmd/dashboard-api, internal/)
 ├── 05-cost-optimizer/        (planned)
 ├── 06-canary-controller/     (planned)
 ├── 07-postgres-operator/     (planned)
@@ -184,6 +177,28 @@ HorizontalPodAutoscaler uses, writing only the `deployments/scale`
 subresource (least privilege — never touches the Pod template),
 asymmetric cooldowns to prevent flapping, and end-to-end verification
 against a live cluster with a CPU-stressed demo workload.
+
+## Dashboard — Unified Automation Control Plane
+
+In progress. Full detail in [`dashboard/backend/README.md`](./dashboard/backend). Phase 1 (Go API) summary:
+
+```
+React Dashboard (later phase)
+      │ REST (+ SSE, later phase)
+      ▼
+Go Dashboard API
+      │
+      ├── Kubernetes API (client-go, read-only) — node/pod counts
+      └── each controller's /metrics — scraped, parsed, diffed into events
+                (auto-healer, rollout-manager, resource-optimizer, autoscaler)
+```
+
+The frontend never touches Kubernetes directly — every read (and, in a
+later phase, every control action) goes through this API. Phase 1 covers
+REST endpoints per controller plus an in-memory event feed synthesized
+from metric deltas (e.g. a replica-count change becomes a "1 -> 10
+replicas" event); SSE, a persistent audit store, and control actions are
+later phases.
 
 ## Roadmap
 

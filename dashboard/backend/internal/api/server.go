@@ -1,86 +1,45 @@
+// Package api wires the dashboard's REST endpoints. Every response reads
+// from the poller's in-memory cache and event store — handlers never call
+// out to Kubernetes or a controller directly, so a slow scrape can't turn
+// into a slow HTTP request.
 package api
 
 import (
-	"encoding/json"
 	"net/http"
 
-	"k8s-automation-dashboard-backend/internal/events"
-	"k8s-automation-dashboard-backend/internal/kubernetes"
-	"k8s-automation-dashboard-backend/internal/prometheus"
-	"k8s-automation-dashboard-backend/internal/store"
+	"dashboard-api/internal/config"
+	"dashboard-api/internal/events"
+	"dashboard-api/internal/poller"
 )
 
 type Server struct {
-	kube    *kubernetes.ClusterClient
-	store   store.AuditStore
-	bus     *events.EventBus
-	metrics *prometheus.MetricsCollector
-	mux     *http.ServeMux
+	cfg   config.Config
+	cache *poller.Cache
+	store *events.Store
 }
 
-func NewServer(
-	kube *kubernetes.ClusterClient,
-	store store.AuditStore,
-	bus *events.EventBus,
-	metrics *prometheus.MetricsCollector,
-) *Server {
-	s := &Server{
-		kube:    kube,
-		store:   store,
-		bus:     bus,
-		metrics: metrics,
-		mux:     http.NewServeMux(),
-	}
-	s.registerRoutes()
-	return s
+func NewServer(cfg config.Config, cache *poller.Cache, store *events.Store) *Server {
+	return &Server{cfg: cfg, cache: cache, store: store}
 }
 
-func (s *Server) Handler() http.Handler {
-	return s.corsMiddleware(s.mux)
+func (s *Server) Routes() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /healthz", s.handleHealthz)
+	mux.HandleFunc("GET /api/overview", s.handleOverview)
+	mux.HandleFunc("GET /api/auto-healer", s.handleHealer)
+	mux.HandleFunc("GET /api/rollout-manager", s.handleRollout)
+	mux.HandleFunc("GET /api/resource-optimizer", s.handleOptimizer)
+	mux.HandleFunc("GET /api/autoscaler", s.handleAutoscaler)
+	mux.HandleFunc("GET /api/events", s.handleEvents)
+	return withCORS(mux)
 }
 
-func (s *Server) corsMiddleware(next http.Handler) http.Handler {
+// withCORS allows the Vite dev server (a different origin) to call this
+// API during local development.
+func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+		w.Header().Set("Access-Control-Allow-Methods", "GET")
 		next.ServeHTTP(w, r)
 	})
-}
-
-func (s *Server) registerRoutes() {
-	// Overview
-	s.mux.HandleFunc("GET /api/v1/overview", s.handleOverview)
-
-	// 01 Pod Auto-Healer
-	s.mux.HandleFunc("GET /api/v1/healer/pods", s.handleHealerPods)
-	s.mux.HandleFunc("POST /api/v1/healer/remediate", s.handleHealerRemediate)
-
-	// 02 Rollout Manager
-	s.mux.HandleFunc("GET /api/v1/rollout/deployments", s.handleRolloutDeployments)
-	s.mux.HandleFunc("POST /api/v1/rollout/rollback", s.handleRolloutRollback)
-
-	// 03 Resource Optimizer
-	s.mux.HandleFunc("GET /api/v1/optimizer/recommendations", s.handleOptimizerRecommendations)
-	s.mux.HandleFunc("POST /api/v1/optimizer/apply", s.handleOptimizerApply)
-
-	// 04 Horizontal Autoscaler
-	s.mux.HandleFunc("GET /api/v1/scaler/status", s.handleScalerStatus)
-	s.mux.HandleFunc("POST /api/v1/scaler/scale", s.handleScalerScale)
-
-	// Live Events & Audit
-	s.mux.HandleFunc("GET /api/v1/events/stream", s.handleEventsStream)
-	s.mux.HandleFunc("GET /api/v1/events/recent", s.handleEventsRecent)
-	s.mux.HandleFunc("GET /api/v1/audit/logs", s.handleAuditLogs)
-}
-
-func writeJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(data)
 }
