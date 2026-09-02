@@ -17,7 +17,7 @@ Each project is a standalone Go module in its own directory.
 | 02 | [Deployment Rollout Manager](./02-rollout-manager) | Automated rollout monitoring and rollback | ✅ Complete |
 | 03 | [Kubernetes Resource Optimizer](./03-resource-optimizer) | Analyze CPU/memory usage, recommend request/limit changes | ✅ Complete |
 | 04 | [Auto-Scaling Controller](./04-autoscaler) | Custom scaling driven by application metrics | ✅ Complete |
-| 📊 | [Unified Automation Dashboard](./dashboard) | Go API + React UI aggregating all 4 controllers into one control/observability layer | 🚧 In progress (Phase 4: detail pages live) |
+| 📊 | [Unified Automation Dashboard](./dashboard) | Go API + React UI aggregating all 4 controllers into one control/observability layer | 🚧 In progress (Phase 5: control actions live) |
 | 05 | Kubernetes Cost Optimizer | Find over-provisioned workloads, reduce resource waste | 🔜 Planned |
 | 06 | Canary Deployment Controller | Gradual traffic shift with automatic rollback on errors | 🔜 Planned |
 | 07 | PostgreSQL Kubernetes Operator | Operator managing DB lifecycle, backup, failover | 🔜 Planned |
@@ -181,25 +181,24 @@ against a live cluster with a CPU-stressed demo workload.
 
 ## Dashboard — Unified Automation Control Plane
 
-In progress. Full detail in [`dashboard/backend/README.md`](./dashboard/backend). Phase 1 (Go API) summary:
+In progress. Full detail in [`dashboard/backend/README.md`](./dashboard/backend).
 
 ```
-React Dashboard (Phase 2 shell — routed pages not yet wired to data)
-      │ REST (+ SSE, later phase)
+React Dashboard — observability pages (live) + 4 control actions (live)
+      │ REST
       ▼
 Go Dashboard API
       │
-      ├── Kubernetes API (client-go, read-only) — node/pod counts
-      └── each controller's /metrics — scraped, parsed, diffed into events
-                (auto-healer, rollout-manager, resource-optimizer, autoscaler)
+      ├── read: Kubernetes API + each controller's /metrics
+      │         → cluster/automation state, events diffed from metric deltas
+      └── write: 4 typed actions only (restart/rollback/apply/scale)
+                → validate → execute → audit (SQLite) → dashboard_actions_* metrics
 ```
 
-The frontend never touches Kubernetes directly — every read (and, in a
-later phase, every control action) goes through this API. Phase 1 covers
-REST endpoints per controller plus an in-memory event feed synthesized
-from metric deltas (e.g. a replica-count change becomes a "1 -> 10
-replicas" event); SSE, a persistent audit store, and control actions are
-later phases.
+The frontend never talks to Kubernetes directly — every read and every
+control action routes through this API, which exposes exactly four typed
+write operations (never arbitrary `kubectl`-equivalents), each idempotent
+and audited. SSE and authentication/RBAC are later phases.
 
 ## Roadmap
 
