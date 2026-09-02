@@ -26,7 +26,7 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 			{"name": "resource-optimizer", "namespace": s.cfg.ResourceOptimizer.Namespace, "containersTracked": snap.Optimizer.ContainersTracked, "driftCount": len(snap.Optimizer.Drift)},
 			{"name": "autoscaler", "namespace": s.cfg.Autoscaler.Namespace, "currentReplicas": snap.Autoscaler.CurrentReplicas, "desiredReplicas": snap.Autoscaler.DesiredReplicas},
 		},
-		"recentEvents": s.store.List(10),
+		"recentEvents": s.store.List(10, ""),
 	})
 }
 
@@ -62,5 +62,5 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 			limit = n
 		}
 	}
-	writeJSON(w, s.store.List(limit))
+	writeJSON(w, s.store.List(limit, r.URL.Query().Get("source")))
 }

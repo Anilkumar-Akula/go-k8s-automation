@@ -38,14 +38,22 @@ func (s *Store) Add(e Event) {
 	}
 }
 
-// List returns up to limit of the most recent events (0 = all buffered).
-func (s *Store) List(limit int) []Event {
+// List returns up to limit of the most recent events (0 = all buffered),
+// optionally restricted to one source ("" = no filter).
+func (s *Store) List(limit int, source string) []Event {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	if limit <= 0 || limit > len(s.buf) {
-		limit = len(s.buf)
+
+	var matched []Event
+	for _, e := range s.buf {
+		if source == "" || e.Source == source {
+			matched = append(matched, e)
+		}
+	}
+	if limit <= 0 || limit > len(matched) {
+		limit = len(matched)
 	}
 	out := make([]Event, limit)
-	copy(out, s.buf[:limit])
+	copy(out, matched[:limit])
 	return out
 }

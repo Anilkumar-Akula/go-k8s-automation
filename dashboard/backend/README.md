@@ -62,7 +62,7 @@ env-based:
 - `GET /api/rollout-manager` — deployments checked, rollbacks, failures, stuck-by-reason
 - `GET /api/resource-optimizer` — containers tracked, recommendations, drift entries
 - `GET /api/autoscaler` — current/desired replicas, utilization, scale event counts
-- `GET /api/events?limit=N` — recent synthesized events, newest first
+- `GET /api/events?limit=N&source=X` — recent synthesized events, newest first, optionally filtered to one source (`auto-healer` | `rollout-manager` | `resource-optimizer` | `autoscaler`)
 
 ## Deferred to later phases
 
