@@ -9,24 +9,32 @@ import (
 // Recommendation is one container's current request/limit recommendation,
 // read from project 03's resource_optimizer_recommended_* gauges.
 type Recommendation struct {
-	Namespace, Pod, Container string
-	ReqCPUMilli, LimCPUMilli  float64
-	ReqMemBytes, LimMemBytes  float64
+	Namespace   string  `json:"namespace"`
+	Pod         string  `json:"pod"`
+	Container   string  `json:"container"`
+	ReqCPUMilli float64 `json:"reqCpuMilli"`
+	LimCPUMilli float64 `json:"limCpuMilli"`
+	ReqMemBytes float64 `json:"reqMemBytes"`
+	LimMemBytes float64 `json:"limMemBytes"`
 }
 
 // DriftEntry is one container/resource/field combination flagged as
 // drifted, from resource_optimizer_drift_detected_total.
 type DriftEntry struct {
-	Namespace, Pod, Container  string
-	Resource, Field, Direction string
-	Count                      float64
+	Namespace string  `json:"namespace"`
+	Pod       string  `json:"pod"`
+	Container string  `json:"container"`
+	Resource  string  `json:"resource"`
+	Field     string  `json:"field"`
+	Direction string  `json:"direction"`
+	Count     float64 `json:"count"`
 }
 
 type OptimizerSnapshot struct {
-	ContainersTracked float64
-	SamplesCollected  float64
-	Recommendations   []Recommendation
-	Drift             []DriftEntry
+	ContainersTracked float64          `json:"containersTracked"`
+	SamplesCollected  float64          `json:"samplesCollected"`
+	Recommendations   []Recommendation `json:"recommendations"`
+	Drift             []DriftEntry     `json:"drift"`
 }
 
 func CollectOptimizer(ctx context.Context, url string) (OptimizerSnapshot, error) {

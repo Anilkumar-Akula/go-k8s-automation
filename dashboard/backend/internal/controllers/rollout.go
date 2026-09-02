@@ -9,11 +9,11 @@ import (
 // RolloutSnapshot mirrors project 02's Prometheus metrics
 // (rollout_manager_*).
 type RolloutSnapshot struct {
-	DeploymentsChecked float64
-	RollbackTotal      float64
-	RollbackFailures   float64
-	WatchReconnects    float64
-	StuckByReason      map[string]float64
+	DeploymentsChecked float64            `json:"deploymentsChecked"`
+	RollbackTotal      float64            `json:"rollbackTotal"`
+	RollbackFailures   float64            `json:"rollbackFailures"`
+	WatchReconnects    float64            `json:"watchReconnects"`
+	StuckByReason      map[string]float64 `json:"stuckByReason"`
 }
 
 func CollectRollout(ctx context.Context, url string) (RolloutSnapshot, error) {

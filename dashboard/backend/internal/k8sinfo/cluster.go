@@ -12,12 +12,12 @@ import (
 )
 
 type ClusterSummary struct {
-	NodeCount   int
-	NodesReady  int
-	PodsTotal   int
-	PodsRunning int
-	PodsPending int
-	PodsFailed  int
+	NodeCount   int `json:"nodeCount"`
+	NodesReady  int `json:"nodesReady"`
+	PodsTotal   int `json:"podsTotal"`
+	PodsRunning int `json:"podsRunning"`
+	PodsPending int `json:"podsPending"`
+	PodsFailed  int `json:"podsFailed"`
 }
 
 func Summary(ctx context.Context, clientset kubernetes.Interface) (ClusterSummary, error) {

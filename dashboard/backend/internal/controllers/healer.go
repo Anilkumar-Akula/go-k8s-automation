@@ -9,11 +9,11 @@ import (
 // HealerSnapshot mirrors project 01's Prometheus metrics
 // (auto_healer_*).
 type HealerSnapshot struct {
-	PodsChecked         float64
-	RemediationTotal    float64
-	RemediationFailures float64
-	WatchReconnects     float64
-	UnhealthyByReason   map[string]float64
+	PodsChecked         float64            `json:"podsChecked"`
+	RemediationTotal    float64            `json:"remediationTotal"`
+	RemediationFailures float64            `json:"remediationFailures"`
+	WatchReconnects     float64            `json:"watchReconnects"`
+	UnhealthyByReason   map[string]float64 `json:"unhealthyByReason"`
 }
 
 func CollectHealer(ctx context.Context, url string) (HealerSnapshot, error) {

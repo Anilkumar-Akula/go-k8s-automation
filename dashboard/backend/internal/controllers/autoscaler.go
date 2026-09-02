@@ -9,11 +9,11 @@ import (
 // AutoscalerSnapshot mirrors project 04's Prometheus metrics
 // (autoscaler_*) for one target Deployment.
 type AutoscalerSnapshot struct {
-	CurrentReplicas    float64
-	DesiredReplicas    float64
-	UtilizationPercent float64
-	ScaleUpEvents      float64
-	ScaleDownEvents    float64
+	CurrentReplicas    float64 `json:"currentReplicas"`
+	DesiredReplicas    float64 `json:"desiredReplicas"`
+	UtilizationPercent float64 `json:"utilizationPercent"`
+	ScaleUpEvents      float64 `json:"scaleUpEvents"`
+	ScaleDownEvents    float64 `json:"scaleDownEvents"`
 }
 
 func CollectAutoscaler(ctx context.Context, url, namespace, deployment string) (AutoscalerSnapshot, error) {
