@@ -47,13 +47,17 @@ func diffRolloutEvents(ns string, prev, curr controllers.RolloutSnapshot) []even
 }
 
 func diffOptimizerEvents(prev, curr controllers.OptimizerSnapshot) []events.Event {
-	prevByKey := make(map[string]controllers.DriftEntry, len(prev.Drift))
+	prevKeys := make(map[string]bool, len(prev.Drift))
 	for _, d := range prev.Drift {
-		prevByKey[driftKey(d)] = d
+		prevKeys[driftKey(d)] = true
 	}
+	// The underlying counter increments every poll a workload stays
+	// drifted, not just on first detection — so key presence (not the
+	// count delta) is what marks a new event, or every poll would emit
+	// one for as long as the drift persists.
 	var out []events.Event
 	for _, d := range curr.Drift {
-		if d.Count-prevByKey[driftKey(d)].Count > 0 {
+		if !prevKeys[driftKey(d)] {
 			target := d.Namespace + "/" + d.Pod + "/" + d.Container
 			out = append(out, events.Event{
 				Source: "resource-optimizer", Target: target,

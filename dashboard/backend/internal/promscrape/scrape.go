@@ -13,6 +13,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/common/model"
 )
 
 // Families is a parsed /metrics response, keyed by metric name.
@@ -35,7 +36,10 @@ func Fetch(ctx context.Context, url string) (Families, error) {
 		return nil, fmt.Errorf("scrape %s: status %d", url, resp.StatusCode)
 	}
 
-	var parser expfmt.TextParser
+	// expfmt.TextParser{} zero value has an unset name-validation scheme
+	// and panics on first use; the controllers emit standard ASCII
+	// metric names, so legacy validation is what we want.
+	parser := expfmt.NewTextParser(model.LegacyValidation)
 	families, err := parser.TextToMetricFamilies(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("parse %s: %w", url, err)
