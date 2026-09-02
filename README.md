@@ -17,7 +17,7 @@ Each project is a standalone Go module in its own directory.
 | 02 | [Deployment Rollout Manager](./02-rollout-manager) | Automated rollout monitoring and rollback | ✅ Complete |
 | 03 | [Kubernetes Resource Optimizer](./03-resource-optimizer) | Analyze CPU/memory usage, recommend request/limit changes | ✅ Complete |
 | 04 | [Auto-Scaling Controller](./04-autoscaler) | Custom scaling driven by application metrics | ✅ Complete |
-| 📊 | [Unified Automation Dashboard](./dashboard) | Go API aggregating all 4 controllers' metrics into one control/observability layer | 🚧 In progress (Phase 1: API) |
+| 📊 | [Unified Automation Dashboard](./dashboard) | Go API + React UI aggregating all 4 controllers into one control/observability layer | 🚧 In progress (Phase 2: React shell) |
 | 05 | Kubernetes Cost Optimizer | Find over-provisioned workloads, reduce resource waste | 🔜 Planned |
 | 06 | Canary Deployment Controller | Gradual traffic shift with automatic rollback on errors | 🔜 Planned |
 | 07 | PostgreSQL Kubernetes Operator | Operator managing DB lifecycle, backup, failover | 🔜 Planned |
@@ -65,7 +65,8 @@ go-k8s-automation/
 │   ├── go.mod
 │   └── README.md
 ├── dashboard/
-│   └── backend/              (Phase 1: Go API — cmd/dashboard-api, internal/)
+│   ├── backend/               (Phase 1: Go API — cmd/dashboard-api, internal/)
+│   └── frontend/              (Phase 2: React + Vite shell — sidebar nav, routed pages)
 ├── 05-cost-optimizer/        (planned)
 ├── 06-canary-controller/     (planned)
 ├── 07-postgres-operator/     (planned)
@@ -183,7 +184,7 @@ against a live cluster with a CPU-stressed demo workload.
 In progress. Full detail in [`dashboard/backend/README.md`](./dashboard/backend). Phase 1 (Go API) summary:
 
 ```
-React Dashboard (later phase)
+React Dashboard (Phase 2 shell — routed pages not yet wired to data)
       │ REST (+ SSE, later phase)
       ▼
 Go Dashboard API
