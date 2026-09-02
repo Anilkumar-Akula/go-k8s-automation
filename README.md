@@ -16,7 +16,7 @@ Each project is a standalone Go module in its own directory.
 | 01 | [Pod Auto-Healer](./01-pod-auto-healer) | Detect unhealthy Pods, remediate with owner-aware retry + exponential backoff | ✅ Complete |
 | 02 | [Deployment Rollout Manager](./02-rollout-manager) | Automated rollout monitoring and rollback | ✅ Complete |
 | 03 | [Kubernetes Resource Optimizer](./03-resource-optimizer) | Analyze CPU/memory usage, recommend request/limit changes | ✅ Complete |
-| 04 | Auto-Scaling Controller | Custom scaling driven by application metrics | 🔜 Planned |
+| 04 | [Auto-Scaling Controller](./04-autoscaler) | Custom scaling driven by application metrics | ✅ Complete |
 | 05 | Kubernetes Cost Optimizer | Find over-provisioned workloads, reduce resource waste | 🔜 Planned |
 | 06 | Canary Deployment Controller | Gradual traffic shift with automatic rollback on errors | 🔜 Planned |
 | 07 | PostgreSQL Kubernetes Operator | Operator managing DB lifecycle, backup, failover | 🔜 Planned |
@@ -56,7 +56,13 @@ go-k8s-automation/
 │   ├── Dockerfile
 │   ├── go.mod
 │   └── README.md
-├── 04-autoscaler/            (planned)
+├── 04-autoscaler/
+│   ├── cmd/
+│   ├── internal/
+│   ├── deploy/
+│   ├── Dockerfile
+│   ├── go.mod
+│   └── README.md
 ├── 05-cost-optimizer/        (planned)
 ├── 06-canary-controller/     (planned)
 ├── 07-postgres-operator/     (planned)
@@ -146,6 +152,28 @@ recommender instead of a fixed usage-plus-margin rule, and a
 read-only design — this project only recommends, since patching live
 requests/limits can restart Pods and shouldn't happen without an
 explicit, separate authorization step.
+
+## Project 04 — Auto-Scaling Controller
+
+Full detail in [`04-autoscaler/README.md`](./04-autoscaler). Summary:
+
+```
+Kubernetes API (Deployment + Pods) + metrics.k8s.io (PodMetrics)
+      │
+ usage.Collect: avg CPU usage / CPU requests, by label selector
+      │
+ scaler.Decide: ceil(current * observed/target), tolerance band, min/max clamp
+      │
+ per-direction cooldown (scale up fast, down slow)
+      │
+ Deployments().UpdateScale (scale subresource only, not the Deployment)
+```
+
+Demonstrates: the same ratio-based scaling formula the built-in
+HorizontalPodAutoscaler uses, writing only the `deployments/scale`
+subresource (least privilege — never touches the Pod template),
+asymmetric cooldowns to prevent flapping, and end-to-end verification
+against a live cluster with a CPU-stressed demo workload.
 
 ## Roadmap
 

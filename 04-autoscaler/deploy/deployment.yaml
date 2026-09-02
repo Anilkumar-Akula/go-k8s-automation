@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoscaler
+  namespace: autoscaler-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoscaler
+  template:
+    metadata:
+      labels:
+        app: autoscaler
+    spec:
+      serviceAccountName: autoscaler
+      containers:
+        - name: autoscaler
+          image: autoscaler:latest
+          ports:
+            - name: metrics
+              containerPort: 8080
+          env:
+            - name: TARGET_NAMESPACE
+              value: autoscaler-demo
+            - name: TARGET_DEPLOYMENT
+              value: demo-app
+            - name: POLL_INTERVAL
+              value: "15s"
+            - name: TARGET_CPU_PERCENT
+              value: "50"
+            - name: MIN_REPLICAS
+              value: "1"
+            - name: MAX_REPLICAS
+              value: "10"
+            - name: SCALE_UP_COOLDOWN
+              value: "60s"
+            - name: SCALE_DOWN_COOLDOWN
+              value: "300s"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true

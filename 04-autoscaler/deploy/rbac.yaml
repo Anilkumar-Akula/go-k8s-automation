@@ -1,0 +1,35 @@
+# Namespaced Role: read the target Deployment and its Pods/PodMetrics,
+# write only the Deployment's scale subresource (not the Deployment
+# itself) — the same narrow permission the built-in HPA controller uses.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: autoscaler
+  namespace: autoscaler-demo
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["get", "update"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: autoscaler
+  namespace: autoscaler-demo
+subjects:
+  - kind: ServiceAccount
+    name: autoscaler
+    namespace: autoscaler-demo
+roleRef:
+  kind: Role
+  name: autoscaler
+  apiGroup: rbac.authorization.k8s.io
