@@ -1,5 +1,4 @@
-import { apiGet } from "../api/client";
-import { usePolling } from "../hooks/usePolling";
+import { useEventStream } from "../hooks/useEventStream";
 import type { DashboardEvent } from "../types/dashboard";
 
 interface EventListProps {
@@ -8,21 +7,16 @@ interface EventListProps {
 }
 
 export default function EventList({ source, limit = 20 }: EventListProps) {
-  const params = new URLSearchParams({ limit: String(limit) });
-  if (source) params.set("source", source);
-
-  const { data, error, loading } = usePolling<DashboardEvent[]>(() =>
-    apiGet(`/api/v1/events?${params.toString()}`),
-  );
+  const { events, error, loading } = useEventStream(limit, source);
 
   if (loading) return <p className="placeholder-note">Loading...</p>;
   if (error) return <p className="placeholder-note">Failed to load events: {error}</p>;
-  if (!data || data.length === 0) return <p className="placeholder-note">No events yet.</p>;
+  if (events.length === 0) return <p className="placeholder-note">No events yet.</p>;
 
   return (
     <ul className="event-list">
-      {data.map((e, i) => (
-        <li key={i}>
+      {events.map((e) => (
+        <li key={e.seq}>
           <span className="event-time">{e.time}</span>
           {!source && <span className="event-source">{e.source}</span>}
           <span className="event-target">{e.target}</span>

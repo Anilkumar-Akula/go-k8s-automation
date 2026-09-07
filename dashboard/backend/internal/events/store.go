@@ -7,6 +7,7 @@ package events
 import "sync"
 
 type Event struct {
+	Seq     int64  `json:"seq"`
 	Time    string `json:"time"`
 	Source  string `json:"source"` // "auto-healer" | "rollout-manager" | "resource-optimizer" | "autoscaler"
 	Target  string `json:"target"` // namespace/pod or namespace/deployment
@@ -16,9 +17,10 @@ type Event struct {
 // Store is a fixed-capacity, newest-first ring buffer, safe for
 // concurrent use by the poller (writer) and HTTP handlers (readers).
 type Store struct {
-	mu  sync.RWMutex
-	cap int
-	buf []Event
+	mu   sync.RWMutex
+	cap  int
+	buf  []Event
+	next int64
 }
 
 func NewStore(capacity int) *Store {
@@ -32,10 +34,30 @@ func NewStore(capacity int) *Store {
 func (s *Store) Add(e Event) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.next++
+	e.Seq = s.next
 	s.buf = append([]Event{e}, s.buf...)
 	if len(s.buf) > s.cap {
 		s.buf = s.buf[:s.cap]
 	}
+}
+
+// Since returns events with Seq > afterSeq, oldest-first — for the SSE
+// stream to send only what a client hasn't seen yet.
+func (s *Store) Since(afterSeq int64) []Event {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var out []Event
+	for _, e := range s.buf { // buf is newest-first
+		if e.Seq <= afterSeq {
+			break
+		}
+		out = append(out, e)
+	}
+	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
+		out[i], out[j] = out[j], out[i]
+	}
+	return out
 }
 
 // List returns up to limit of the most recent events (0 = all buffered),

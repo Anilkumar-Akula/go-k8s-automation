@@ -109,6 +109,43 @@ body {
   font-weight: 500;
 }
 
+.sidebar-auth {
+  margin-top: 24px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-auth label {
+  font-size: 12px;
+  color: var(--text-muted, var(--text));
+}
+
+.sidebar-auth input {
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: var(--text);
+}
+
+.sidebar-auth button {
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.sidebar-auth button:hover {
+  background: var(--code-bg);
+}
+
 .app-content {
   flex: 1;
   padding: 24px 32px;

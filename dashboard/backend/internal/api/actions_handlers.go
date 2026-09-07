@@ -10,6 +10,7 @@ import (
 
 	"dashboard-api/internal/actions"
 	"dashboard-api/internal/audit"
+	"dashboard-api/internal/auth"
 	"dashboard-api/internal/controllers"
 	"dashboard-api/internal/metrics"
 )
@@ -66,15 +67,19 @@ func (s *Server) runAction(
 		metrics.ActionsSuccessTotal.WithLabelValues(project, action).Inc()
 	}
 
+	actor := auth.FromContext(r.Context()).Actor
+	if actor == "" {
+		actor = s.cfg.Actor
+	}
 	entry, auditErr := s.audit.Insert(r.Context(), audit.Event{
-		Actor: s.cfg.Actor, Action: action, Project: project,
+		Actor: actor, Action: action, Project: project,
 		Namespace: namespace, Resource: resource,
 		OldValue: oldValue, NewValue: newValue, Reason: reason, Status: status,
 	})
 	if auditErr != nil {
 		// Auditing is best-effort logging, not a reason to fail an
 		// otherwise-successful action or hide one that failed.
-		entry = audit.Event{Actor: s.cfg.Actor, Action: action, Project: project, Namespace: namespace, Resource: resource, Status: status}
+		entry = audit.Event{Actor: actor, Action: action, Project: project, Namespace: namespace, Resource: resource, Status: status}
 	}
 
 	var httpStatus int

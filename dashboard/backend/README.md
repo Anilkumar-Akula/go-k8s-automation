@@ -3,10 +3,12 @@
 Aggregates all four controllers (`01-pod-auto-healer`, `02-rollout-manager`,
 `03-resource-optimizer`, `04-autoscaler`) into one REST API: cluster health
 from the Kubernetes API, per-controller state from each one's `/metrics`
-endpoint, a live-activity feed synthesized from metric deltas (Phase 1-4),
-and — as of Phase 5 — a small set of typed control actions with validation,
-audit logging, and idempotency. The frontend never talks to Kubernetes
-directly; everything routes through here.
+endpoint, a live-activity feed synthesized from metric deltas and pushed
+over SSE (Phase 1-4, 6), a small set of typed control actions with
+validation, audit logging, and idempotency (Phase 5), and bearer-token
+auth with viewer/operator RBAC gating those actions (Phase 6). The
+frontend never talks to Kubernetes directly; everything routes through
+here.
 
 ```
 Kubernetes API (client-go)              each controller's /metrics
@@ -49,6 +51,16 @@ Kubernetes API (client-go)              each controller's /metrics
   failure) is recorded to SQLite (`internal/audit`, pure-Go driver, no
   cgo) — unlike the in-memory observability event feed, which is fine to
   lose on restart.
+- **SSE by polling the existing ring buffer, not pub/sub.** The events
+  feed is low-volume; `/api/v1/events/stream` just re-reads
+  `events.Store` on a short ticker and sends what's new. Standing up a
+  broadcast/fan-out mechanism would be complexity this dashboard's event
+  rate doesn't justify.
+- **Static bearer tokens, not OIDC/JWT.** One deployment target, a
+  handful of operators — `internal/auth` maps `token:actor:role` entries
+  from `AUTH_TOKENS` to a `viewer` (read-only) or `operator` (read +
+  actions) role. No tokens configured means auth is off entirely, so
+  existing local/demo setups keep working unchanged.
 
 ## Run locally
 
@@ -72,7 +84,8 @@ env-based:
 | `ACTIONS_MAX_REPLICAS` | `20` | Upper bound the scale action's validation enforces |
 | `IDEMPOTENCY_TTL` | `10m` | How long an `Idempotency-Key` is remembered |
 | `AUDIT_DB_PATH` | `dashboard-audit.db` | SQLite file for the audit trail |
-| `ACTOR` | `operator` | Recorded on every audit event — hardcoded until Phase 6 (auth) gives real per-request identity |
+| `ACTOR` | `operator` | Audit fallback when auth is disabled (no `AUTH_TOKENS` set) |
+| `AUTH_TOKENS` | *(empty = auth disabled)* | `token:actor:role,...` (role: `viewer`\|`operator`); e.g. `abc123:alice:operator,def456:bob:viewer` |
 
 ## Endpoints
 
@@ -84,6 +97,7 @@ Read (observability):
 - `GET /api/v1/resource-optimizer` — containers tracked, recommendations, drift entries
 - `GET /api/v1/autoscaler` — current/desired replicas, utilization, scale event counts
 - `GET /api/v1/events?limit=N&source=X` — recent synthesized events, newest first, optionally filtered to one source
+- `GET /api/v1/events/stream` — the same feed pushed over SSE as it happens; when auth is enabled, `EventSource` can't set headers so pass `?token=` instead of `Authorization`
 - `GET /api/v1/audit?limit=N` — persisted control-action history
 
 Write (control actions — see `internal/actions`):
@@ -99,7 +113,7 @@ to make a retry safe.
 
 ## Deferred to later phases
 
-SSE streaming, the confirmation UI is client-side only (no server-side
-"pending approval" step), and authentication/RBAC (`internal/actions` is
-reachable by anyone who can reach this API right now — Phase 6 adds JWT
-and per-role enforcement) — per the project's own phased build order.
+The confirmation UI is client-side only (no server-side "pending
+approval" step) — per the project's own phased build order. `/healthz`
+and `/metrics` stay unauthenticated regardless of `AUTH_TOKENS`, since
+cluster infra probes and Prometheus scrape them without credentials.

@@ -12,6 +12,7 @@ import (
 	"dashboard-api/internal/actions"
 	"dashboard-api/internal/api"
 	"dashboard-api/internal/audit"
+	"dashboard-api/internal/auth"
 	"dashboard-api/internal/config"
 	"dashboard-api/internal/events"
 	"dashboard-api/internal/idempotency"
@@ -49,12 +50,13 @@ func main() {
 
 	executor := actions.NewExecutor(clientset)
 	idemGuard := idempotency.NewGuard(cfg.IdempotencyTTL)
+	authn := auth.New(cfg.AuthTokens)
 
-	server := api.NewServer(cfg, clientset, cache, store, executor, auditStore, idemGuard)
+	server := api.NewServer(cfg, clientset, cache, store, executor, auditStore, idemGuard, authn)
 	httpSrv := &http.Server{Addr: cfg.ListenAddr, Handler: server.Routes()}
 
 	go func() {
-		slog.Info("dashboard-api listening", "addr", cfg.ListenAddr, "poll_interval", cfg.PollInterval)
+		slog.Info("dashboard-api listening", "addr", cfg.ListenAddr, "poll_interval", cfg.PollInterval, "auth_enabled", authn.Enabled())
 		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("http server failed", "error", err)
 		}

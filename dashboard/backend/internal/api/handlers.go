@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func writeJSON(w http.ResponseWriter, v any) {
@@ -63,4 +64,41 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, s.store.List(limit, r.URL.Query().Get("source")))
+}
+
+// handleEventsStream pushes new events over SSE as they land in the
+// store, so the Overview/Live Events pages update without polling.
+// Polling the existing ring buffer on a short ticker is simplest here —
+// event volume is low enough that a pub/sub fan-out would be
+// complexity this dashboard doesn't need yet.
+func (s *Server) handleEventsStream(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, `{"error":"streaming unsupported"}`, http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	var lastSeq int64
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		for _, e := range s.store.Since(lastSeq) {
+			body, _ := json.Marshal(e)
+			w.Write([]byte("data: "))
+			w.Write(body)
+			w.Write([]byte("\n\n"))
+			lastSeq = e.Seq
+		}
+		flusher.Flush()
+
+		select {
+		case <-r.Context().Done():
+			return
+		case <-ticker.C:
+		}
+	}
 }

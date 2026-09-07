@@ -8,6 +8,7 @@ export interface ClusterSummary {
 }
 
 export interface DashboardEvent {
+  seq: number;
   time: string;
   source: "auto-healer" | "rollout-manager" | "resource-optimizer" | "autoscaler";
   target: string;

@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { getToken, setToken } from "../api/client";
 
 const NAV_ITEMS = [
   { to: "/", label: "Overview", end: true },
@@ -11,6 +13,13 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar() {
+  const [token, setTokenInput] = useState(getToken());
+
+  function save() {
+    setToken(token.trim());
+    window.location.reload(); // simplest way to re-auth every open connection/poll
+  }
+
   return (
     <nav className="sidebar">
       <div className="sidebar-brand">K8s Automation</div>
@@ -27,6 +36,19 @@ export default function Sidebar() {
           </li>
         ))}
       </ul>
+      <div className="sidebar-auth">
+        <label htmlFor="auth-token">Auth token</label>
+        <input
+          id="auth-token"
+          type="text"
+          autoComplete="off"
+          placeholder="none (auth disabled)"
+          value={token}
+          onChange={(e) => setTokenInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && save()}
+        />
+        <button onClick={save}>Save</button>
+      </div>
     </nav>
   );
 }

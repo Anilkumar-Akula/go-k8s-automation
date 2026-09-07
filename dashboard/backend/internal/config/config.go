@@ -23,9 +23,12 @@ type Config struct {
 	ActionsMaxReplicas int32
 	IdempotencyTTL     time.Duration
 	AuditDBPath        string
-	// Actor is recorded on every audit event. Hardcoded until Phase 6
-	// (authentication) gives us real per-request identity.
+	// Actor is the fallback recorded on audit events when auth is
+	// disabled (no AuthTokens configured) — see internal/auth.
 	Actor string
+	// AuthTokens is "token:actor:role,..." (role: viewer|operator).
+	// Empty disables auth, matching pre-Phase-6 behavior.
+	AuthTokens string
 }
 
 // ControllerTarget is where to scrape one controller's Prometheus metrics
@@ -77,6 +80,7 @@ func Load() Config {
 		IdempotencyTTL:     getEnvDuration("IDEMPOTENCY_TTL", 10*time.Minute),
 		AuditDBPath:        getEnv("AUDIT_DB_PATH", "dashboard-audit.db"),
 		Actor:              getEnv("ACTOR", "operator"),
+		AuthTokens:         getEnv("AUTH_TOKENS", ""),
 	}
 }
 
