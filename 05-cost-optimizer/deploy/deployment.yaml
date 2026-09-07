@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cost-optimizer
+  namespace: cost-optimizer-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cost-optimizer
+  template:
+    metadata:
+      labels:
+        app: cost-optimizer
+    spec:
+      serviceAccountName: cost-optimizer
+      containers:
+        - name: cost-optimizer
+          image: cost-optimizer:latest
+          ports:
+            - name: metrics
+              containerPort: 8080
+          env:
+            - name: TARGET_NAMESPACE
+              value: cost-optimizer-demo
+            - name: POLL_INTERVAL
+              value: "30s"
+            - name: WINDOW_SIZE
+              value: "60"
+            - name: MIN_SAMPLES
+              value: "5"
+            - name: WINDOW_TTL
+              value: "15m"
+            - name: CPU_CORE_HOUR_RATE
+              value: "0.033"
+            - name: MEM_GIB_HOUR_RATE
+              value: "0.0045"
+            - name: TOP_N
+              value: "5"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true

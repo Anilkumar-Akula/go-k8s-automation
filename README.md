@@ -17,8 +17,8 @@ Each project is a standalone Go module in its own directory.
 | 02 | [Deployment Rollout Manager](./02-rollout-manager) | Automated rollout monitoring and rollback | ✅ Complete |
 | 03 | [Kubernetes Resource Optimizer](./03-resource-optimizer) | Analyze CPU/memory usage, recommend request/limit changes | ✅ Complete |
 | 04 | [Auto-Scaling Controller](./04-autoscaler) | Custom scaling driven by application metrics | ✅ Complete |
-| 📊 | [Unified Automation Dashboard](./dashboard) | Go API + React UI aggregating all 4 controllers into one control/observability layer | 🚧 In progress (Phase 5: control actions live) |
-| 05 | Kubernetes Cost Optimizer | Find over-provisioned workloads, reduce resource waste | 🔜 Planned |
+| 📊 | [Unified Automation Dashboard](./dashboard) | Go API + React UI aggregating all 4 controllers into one control/observability layer | 🚧 In progress (Phase 6: SSE + auth/RBAC live) |
+| 05 | [Kubernetes Cost Optimizer](./05-cost-optimizer) | Find over-provisioned workloads, rank them by estimated $/month wasted | ✅ Complete |
 | 06 | Canary Deployment Controller | Gradual traffic shift with automatic rollback on errors | 🔜 Planned |
 | 07 | PostgreSQL Kubernetes Operator | Operator managing DB lifecycle, backup, failover | 🔜 Planned |
 | 08 | Self-Healing Microservice Platform | Centralized detect → diagnose → remediate | 🔜 Planned |
@@ -67,7 +67,13 @@ go-k8s-automation/
 ├── dashboard/
 │   ├── backend/               (Phase 1: Go API — cmd/dashboard-api, internal/)
 │   └── frontend/              (Phase 2: React + Vite shell — sidebar nav, routed pages)
-├── 05-cost-optimizer/        (planned)
+├── 05-cost-optimizer/
+│   ├── cmd/
+│   ├── internal/
+│   ├── deploy/
+│   ├── Dockerfile
+│   ├── go.mod
+│   └── README.md
 ├── 06-canary-controller/     (planned)
 ├── 07-postgres-operator/     (planned)
 ├── 08-self-healing-platform/ (planned)
@@ -179,18 +185,39 @@ subresource (least privilege — never touches the Pod template),
 asymmetric cooldowns to prevent flapping, and end-to-end verification
 against a live cluster with a CPU-stressed demo workload.
 
+## Project 05 — Kubernetes Cost Optimizer
+
+Full detail in [`05-cost-optimizer/README.md`](./05-cost-optimizer). Summary:
+
+```
+Kubernetes API (Pod specs) + metrics.k8s.io (PodMetrics)
+      │
+ sampler + percentile recommender (reused verbatim from project 03)
+      │
+ cost.MonthlyWaste(configured request, recommended request)
+      │
+ Prometheus gauges + ranked top-N over-provisioned containers logged
+```
+
+Demonstrates: turning a resource recommendation into a FinOps-shaped
+dollar figure instead of a drift percentage, scoring waste on requests
+(what a scheduler reserves and an autoscaler sizes nodes against) rather
+than limits, and reusing project 03's sampling/analyzer pipeline instead
+of re-deriving "what should this container's request be" a second way.
+
 ## Dashboard — Unified Automation Control Plane
 
 In progress. Full detail in [`dashboard/backend/README.md`](./dashboard/backend).
 
 ```
-React Dashboard — observability pages (live) + 4 control actions (live)
-      │ REST
+React Dashboard — observability pages (SSE live) + 4 control actions (live)
+      │ REST + SSE, Bearer token
       ▼
-Go Dashboard API
+Go Dashboard API — auth middleware (viewer/operator RBAC)
       │
       ├── read: Kubernetes API + each controller's /metrics
       │         → cluster/automation state, events diffed from metric deltas
+      │         → pushed to the frontend over /api/v1/events/stream (SSE)
       └── write: 4 typed actions only (restart/rollback/apply/scale)
                 → validate → execute → audit (SQLite) → dashboard_actions_* metrics
 ```
@@ -198,7 +225,9 @@ Go Dashboard API
 The frontend never talks to Kubernetes directly — every read and every
 control action routes through this API, which exposes exactly four typed
 write operations (never arbitrary `kubectl`-equivalents), each idempotent
-and audited. SSE and authentication/RBAC are later phases.
+and audited. Bearer tokens map to a `viewer` (read-only) or `operator`
+(read + actions) role; auth is opt-in — set `AUTH_TOKENS` to enable it, or
+leave it unset for the pre-Phase-6 open-access dev/demo setup.
 
 ## Roadmap
 
